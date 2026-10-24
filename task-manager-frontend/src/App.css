@@ -1,0 +1,35 @@
+
+body {
+  margin: 0;
+  background-color: #f3f6fa;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  color: #243b53;
+  font-weight: bold;
+}
+
+.task-item {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+}
+
+.card {
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 15px;
+}
+
+.task-item h6 {
+  overflow-wrap: anywhere;
+}
+
+button {
+  cursor: pointer;
+}
