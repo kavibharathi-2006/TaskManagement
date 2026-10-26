@@ -4,40 +4,24 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const app = express();
-const PORT = 5000;
 
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection
 mongoose
   .connect("mongodb://127.0.0.1:27017/taskmanager")
   .then(() => console.log("MongoDB connected successfully"))
-  .catch((error) => console.log("MongoDB error:", error.message));
+  .catch((error) => console.log("MongoDB error:", error));
 
-// Task schema
 const taskSchema = new mongoose.Schema(
   {
     title: {
       type: String,
       required: true,
-      trim: true,
-    },
-    description: {
-      type: String,
-      default: "",
-    },
-    assignedTo: {
-      type: String,
-      default: "",
-    },
-    dueDate: {
-      type: Date,
-      default: null,
     },
     status: {
       type: String,
-      enum: ["Pending", "In Progress", "Completed"],
+      enum: ["Pending", "Ongoing", "Completed"],
       default: "Pending",
     },
   },
@@ -46,61 +30,29 @@ const taskSchema = new mongoose.Schema(
 
 const Task = mongoose.model("Task", taskSchema);
 
-// Get all tasks
 app.get("/tasks", async (req, res) => {
   try {
-    const tasks = await Task.find().sort({ createdAt: -1 });
+    const tasks = await Task.find();
     res.json(tasks);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Unable to fetch tasks" });
   }
 });
 
-// Create task
 app.post("/tasks", async (req, res) => {
   try {
-    const { title, description, assignedTo, dueDate, status } = req.body;
-
-    if (typeof title !== "string" || !title.trim()) {
-      return res.status(400).json({ message: "Task title is required" });
-    }
-
-    const task = await Task.create({
-      title: title.trim(),
-      description: description || "",
-      assignedTo: assignedTo || "",
-      dueDate: dueDate || null,
-      status: status || "Pending",
-    });
-
+    const task = await Task.create({ title: req.body.title });
     res.status(201).json(task);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Unable to create task" });
   }
 });
 
-// Update task or assignment
-app.put("/tasks/:id", async (req, res) => {
+app.patch("/tasks/:id", async (req, res) => {
   try {
-    const allowedFields = [
-      "title",
-      "description",
-      "assignedTo",
-      "dueDate",
-      "status",
-    ];
-
-    const updates = {};
-
-    for (const field of allowedFields) {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
-      }
-    }
-
     const task = await Task.findByIdAndUpdate(
       req.params.id,
-      updates,
+      { status: req.body.status },
       { new: true, runValidators: true }
     );
 
@@ -110,11 +62,10 @@ app.put("/tasks/:id", async (req, res) => {
 
     res.json(task);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Unable to update task" });
   }
 });
 
-// Delete task
 app.delete("/tasks/:id", async (req, res) => {
   try {
     const task = await Task.findByIdAndDelete(req.params.id);
@@ -125,13 +76,10 @@ app.delete("/tasks/:id", async (req, res) => {
 
     res.json({ message: "Task deleted successfully" });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Unable to delete task" });
   }
 });
 
-// Start server after database connection
-mongoose.connection.once("open", () => {
-  app.listen(PORT, () => {
-    console.log(`Task Management server running on port ${PORT}`);
-  });
+app.listen(5000, () => {
+  console.log("Server running on port 5000");
 });

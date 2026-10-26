@@ -6,20 +6,16 @@ import "./App.css";
 
 const API = "http://localhost:5000/tasks";
 
-const statuses = ["Pending", "In Progress", "Completed"];
-
 function App() {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const fetchTasks = async () => {
     try {
       const response = await axios.get(API);
       setTasks(response.data);
     } catch (error) {
-      console.error("Fetch error:", error.response?.data || error.message);
-      alert("Tasks could not be loaded. Check the backend.");
+      console.log("Unable to fetch tasks");
     }
   };
 
@@ -36,79 +32,42 @@ function App() {
     }
 
     try {
-      setLoading(true);
-
-      await axios.post(API, {
-        title: title.trim(),
-        status: "Pending",
-      });
-
+      await axios.post(API, { title });
       setTitle("");
-      await fetchTasks();
+      fetchTasks();
     } catch (error) {
-      console.error("Add error:", error.response?.data || error.message);
-      alert(
-        error.response?.data?.message || "Task could not be added"
-      );
-    } finally {
-      setLoading(false);
+      alert("Task could not be added");
     }
   };
 
   const updateStatus = async (id, status) => {
     try {
-      await axios.put(`${API}/${id}`, { status });
-      await fetchTasks();
+      await axios.patch(`${API}/${id}`, { status });
+      fetchTasks();
     } catch (error) {
-      console.error(
-        "Status update error:",
-        error.response?.data || error.message
-      );
-
-      alert(
-        error.response?.data?.message ||
-        "Status could not be updated"
-      );
-
-      await fetchTasks();
+      alert("Status could not be updated");
     }
   };
 
   const deleteTask = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this task?"
-    );
-
-    if (!confirmDelete) return;
-
     try {
       await axios.delete(`${API}/${id}`);
-      await fetchTasks();
+      fetchTasks();
     } catch (error) {
-      console.error(
-        "Delete error:",
-        error.response?.data || error.message
-      );
-
-      alert(
-        error.response?.data?.message ||
-        "Task could not be deleted"
-      );
+      alert("Task could not be deleted");
     }
   };
+
+  const statuses = ["Pending", "Ongoing", "Completed"];
 
   return (
     <div className="container py-5">
       <h1 className="text-center mb-2">Task Management</h1>
-
       <p className="text-center text-muted mb-4">
         Organize your daily tasks
       </p>
 
-      <form
-        className="d-flex gap-2 mb-5"
-        onSubmit={addTask}
-      >
+      <form className="d-flex gap-2 mb-5" onSubmit={addTask}>
         <input
           className="form-control"
           type="text"
@@ -116,63 +75,34 @@ function App() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
-
-        <button
-          className="btn btn-primary"
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? "Adding..." : "Add Task"}
+        <button className="btn btn-primary" type="submit">
+          Add Task
         </button>
       </form>
 
       <div className="row">
-        {statuses.map((status) => {
-          const filteredTasks = tasks.filter(
-            (task) => task.status === status
-          );
+        {statuses.map((status) => (
+          <div className="col-md-4 mb-4" key={status}>
+            <div className="card h-100 shadow-sm">
+              <div className="card-header bg-dark text-white">
+                <h5 className="mb-0">{status}</h5>
+              </div>
 
-          return (
-            <div className="col-md-4 mb-4" key={status}>
-              <div className="card h-100 shadow-sm">
-                <div className="card-header bg-dark text-white">
-                  <h5 className="mb-0">{status}</h5>
-                </div>
-
-                <div className="card-body">
-                  {filteredTasks.length === 0 ? (
-                    <p className="text-muted">No tasks yet</p>
-                  ) : (
-                    filteredTasks.map((task) => (
-                      <div
-                        className="task-item mb-3 p-3"
-                        key={task._id}
-                      >
+              <div className="card-body">
+                {tasks.filter((task) => task.status === status).length === 0 ? (
+                  <p className="text-muted">No tasks yet</p>
+                ) : (
+                  tasks
+                    .filter((task) => task.status === status)
+                    .map((task) => (
+                      <div className="task-item mb-3 p-3" key={task._id}>
                         <h6>{task.title}</h6>
-
-                        {task.description && (
-                          <p>{task.description}</p>
-                        )}
-
-                        {task.assignedTo && (
-                          <p>
-                            <strong>Assigned to:</strong>{" "}
-                            {task.assignedTo}
-                          </p>
-                        )}
-
-                        <label className="form-label">
-                          Update Status
-                        </label>
 
                         <select
                           className="form-select mb-2"
                           value={task.status}
                           onChange={(e) =>
-                            updateStatus(
-                              task._id,
-                              e.target.value
-                            )
+                            updateStatus(task._id, e.target.value)
                           }
                         >
                           {statuses.map((item) => (
@@ -184,19 +114,17 @@ function App() {
 
                         <button
                           className="btn btn-danger btn-sm"
-                          type="button"
                           onClick={() => deleteTask(task._id)}
                         >
                           Delete
                         </button>
                       </div>
                     ))
-                  )}
-                </div>
+                )}
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );
