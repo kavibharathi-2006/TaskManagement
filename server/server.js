@@ -1,4 +1,3 @@
-
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -8,8 +7,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Connect to MongoDB Atlas
 mongoose
-  .connect("mongodb://127.0.0.1:27017/taskmanager")
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("MongoDB connected successfully"))
   .catch((error) => console.log("MongoDB error:", error));
 
@@ -30,6 +30,7 @@ const taskSchema = new mongoose.Schema(
 
 const Task = mongoose.model("Task", taskSchema);
 
+// Get all tasks
 app.get("/tasks", async (req, res) => {
   try {
     const tasks = await Task.find();
@@ -39,6 +40,7 @@ app.get("/tasks", async (req, res) => {
   }
 });
 
+// Create a task
 app.post("/tasks", async (req, res) => {
   try {
     const task = await Task.create({ title: req.body.title });
@@ -48,6 +50,7 @@ app.post("/tasks", async (req, res) => {
   }
 });
 
+// Update task status
 app.patch("/tasks/:id", async (req, res) => {
   try {
     const task = await Task.findByIdAndUpdate(
@@ -66,6 +69,7 @@ app.patch("/tasks/:id", async (req, res) => {
   }
 });
 
+// Delete a task
 app.delete("/tasks/:id", async (req, res) => {
   try {
     const task = await Task.findByIdAndDelete(req.params.id);
@@ -80,6 +84,9 @@ app.delete("/tasks/:id", async (req, res) => {
   }
 });
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+// Start server
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
